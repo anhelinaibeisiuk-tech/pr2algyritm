@@ -1,0 +1,175 @@
+import random
+
+
+def generate_matrix(m, n, min_val=0, max_val=20):
+    return [[random.randint(min_val, max_val) for _ in range(n)] for _ in range(m)]
+
+def print_matrix(matrix):
+    if not matrix or not matrix[0]:
+        print("Матриця порожня.")
+        return
+
+    m = len(matrix)
+    n = len(matrix[0])
+
+    header = "\t" + "\t".join(f"стовпець {j+1}" for j in range(n))
+    print(header)
+
+    for i in range(m):
+        row_str = f"рядок {i+1}\t" + "\t".join(f"{val:<10}" if isinstance(val, float) else f"{val}" for val in matrix[i])
+        print(row_str)
+    print()
+
+
+def task1_subtract_row_mean(matrix):
+    result = []
+    for row in matrix:
+        mean = sum(row) / len(row)
+        new_row = [round(val - mean, 2) for val in row]
+        result.append(new_row)
+    return result
+
+
+def task2_cyclic_shift(matrix, k):
+    m = len(matrix)
+    n = len(matrix[0])
+    
+    k_up = k % m
+    k_right = k % n
+
+    shifted_rows = matrix[k_up:] + matrix[:k_up]
+
+    result = []
+    for row in shifted_rows:
+        shifted_row = row[-k_right:] + row[:-k_right]
+        result.append(shifted_row)
+
+    return result
+
+
+def task3_remove_max_rows_cols(matrix):
+    max_val = max(max(row) for row in matrix)
+    
+    m = len(matrix)
+    n = len(matrix[0])
+
+    rows_to_remove = set()
+    cols_to_remove = set()
+
+    for i in range(m):
+        for j in range(n):
+            if matrix[i][j] == max_val:
+                rows_to_remove.add(i)
+                cols_to_remove.add(j)
+
+    new_matrix = []
+    for i in range(m):
+        if i in rows_to_remove:
+            continue
+        new_row = [matrix[i][j] for j in range(n) if j not in cols_to_remove]
+        new_matrix.append(new_row)
+
+    print(f"Максимальне значення в матриці: {max_val}")
+    print(f"Видалені рядки: {[r+1 for r in rows_to_remove]}, Видалені стовпці: {[c+1 for c in cols_to_remove]}")
+    return new_matrix
+
+
+def task4_rotate_90_inplace(matrix):
+    n = len(matrix)
+    
+    for i in range(n):
+        for j in range(i + 1, n):
+            matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+
+    for i in range(n):
+        matrix[i].reverse()
+
+
+DAYS = ["Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця"]
+GROUPS = ["Група 1", "Група 2", "Група 3"]
+
+def run_schedule_task():
+    print("=" * 60)
+    print("ДОДАТКОВЕ ЗАВДАННЯ: Розклад студентів")
+    print("=" * 60)
+
+    subjects = ["Математика", "Програмування", "Фізика", "Історія", "Англійська", "Вільне вікно"]
+
+    schedule = [[[random.choice(subjects) for _ in range(4)] for _ in range(5)] for _ in range(3)]
+
+    target_group_idx = 0
+    max_lessons = -1
+    busiest_day = ""
+
+    for day_idx, day_name in enumerate(DAYS):
+        lessons_count = sum(1 for pair in schedule[target_group_idx][day_idx] if pair != "Вільне вікно")
+        if lessons_count > max_lessons:
+            max_lessons = lessons_count
+            busiest_day = day_name
+
+    print(f"1. Найбільше навантаження для {GROUPS[target_group_idx]}: {busiest_day} ({max_lessons} пар(и)).")
+
+    print("\n2. Дні з незручним розкладом («вікнами» між парами):")
+    for g_idx, group in enumerate(GROUPS):
+        for d_idx, day in enumerate(DAYS):
+            day_schedule = schedule[g_idx][d_idx]
+            
+            real_lesson_indices = [i for i, subject in enumerate(day_schedule) if subject != "Вільне вікно"]
+            
+            if len(real_lesson_indices) > 1:
+                first = real_lesson_indices[0]
+                last = real_lesson_indices[-1]
+                
+                has_gap = any(day_schedule[i] == "Вільне вікно" for i in range(first, last))
+                if has_gap:
+                    print(f"   - {group}, {day}: розклад {day_schedule}")
+
+    print("\n3. Потокові заняття (однаковий предмет в один і той самий час):")
+    stream_found = False
+    for d_idx, day in enumerate(DAYS):
+        for p_idx in range(4):
+            pairs_at_time = [schedule[g_idx][d_idx][p_idx] for g_idx in range(len(GROUPS))]
+            
+            for subject in set(pairs_at_time):
+                if subject != "Вільне вікно" and pairs_at_time.count(subject) > 1:
+                    matching_groups = [GROUPS[g] for g in range(len(GROUPS)) if pairs_at_time[g] == subject]
+                    print(f"   - {day}, {p_idx + 1}-я пара: '{subject}' у груп {', '.join(matching_groups)}")
+                    stream_found = True
+
+    if not stream_found:
+        print("   - Потокових занять не виявлено.")
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("ПОЧАТКОВА МАТРИЦЯ (Підготовка)")
+    print("=" * 60)
+    matrix = generate_matrix(4, 4, min_val=1, max_val=15)
+    print_matrix(matrix)
+
+    print("=" * 60)
+    print("ЗАВДАННЯ 1: Віднімання середнього арифметичного рядка")
+    print("=" * 60)
+    task1_res = task1_subtract_row_mean(matrix)
+    print_matrix(task1_res)
+
+    print("=" * 60)
+    print("ЗАВДАННЯ 2: Циклічний зсув на k=1 позицію (вправо та догори)")
+    print("=" * 60)
+    task2_res = task2_cyclic_shift(matrix, k=1)
+    print_matrix(task2_res)
+
+    print("=" * 60)
+    print("ЗАВДАННЯ 3: Видалення рядків і стовпців з max елементом")
+    print("=" * 60)
+    task3_res = task3_remove_max_rows_cols(matrix)
+    print_matrix(task3_res)
+
+    print("=" * 60)
+    print("ЗАВДАННЯ 4: Обертання на 90 градусів за годинниковою стрілкою (In-Place)")
+    print("=" * 60)
+    matrix_to_rotate = [row[:] for row in matrix]
+    task4_rotate_90_inplace(matrix_to_rotate)
+    print_matrix(matrix_to_rotate)
+
+    run_schedule_task()
